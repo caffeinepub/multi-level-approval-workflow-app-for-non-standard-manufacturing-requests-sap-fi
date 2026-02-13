@@ -1,0 +1,191 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Non-standard manufacturing request approvals (SAP Fiori-like UI)",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "summary": "Add Internet Identity login/logout, persist Principal-based identity in the UI, and gate protected actions/data behind authenticated state.",
+      "acceptanceCriteria": [
+        "Users can sign in and sign out using Internet Identity.",
+        "Frontend shows signed-in state and blocks approval actions when not authenticated."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "create",
+          "description": "Create the application shell that reads authentication state (via useInternetIdentity), renders signed-in UI vs access-denied/sign-in prompt, and hosts the router. Use the selected \"authorization\" component guidance for Internet Identity login state handling and cached data clearing; verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/auth/LoginButton.tsx",
+          "operation": "create",
+          "description": "Implement a Login/Logout button using Internet Identity (useInternetIdentity) and clear React Query cache on logout. Use the selected \"authorization\" component's Login Component pattern; verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/auth/ProfileSetupDialog.tsx",
+          "operation": "create",
+          "description": "Add first-login profile setup (ask for English display name) that calls getCallerUserProfile/saveCallerUserProfile and avoids modal flash by following the recommended loading-state pattern. Use the selected \"authorization\" component's profile setup guidance; verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useCurrentUserProfile.ts",
+          "operation": "create",
+          "description": "Create React Query hooks for getCallerUserProfile/saveCallerUserProfile, with loading state that depends on actor readiness (useActor). Use the selected \"authorization\" component's \"Preventing Profile Setup Modal Flash\" approach; verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useAuthz.ts",
+          "operation": "create",
+          "description": "Add a small auth helper hook that exposes isAuthenticated, principal (as string), and clears client-side caches on logout coordination (used by pages to block actions). Use the selected \"authorization\" component guidance on treating anonymous principals as guests; verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/main.tsx",
+          "operation": "modify",
+          "description": "Wire the new App shell (frontend/src/App.tsx) into the existing provider tree and ensure the app consistently uses InternetIdentityProvider + QueryClientProvider for auth-aware data fetching. Use the selected \"authorization\" component guidance for clearing cached data on logout; verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Build SAP Fiori-like UI pages for Create Request, My Requests, My Approvals inbox, and Request Detail (including approval history).",
+      "acceptanceCriteria": [
+        "There is a Create Request form with validation and a Submit action.",
+        "There is a My Requests page listing requests created by the signed-in user with status and current level.",
+        "There is a My Approvals inbox showing only actionable approvals for the signed-in user.",
+        "Each list supports opening a detail view that shows request info plus approval history."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/routes.tsx",
+          "operation": "create",
+          "description": "Define and export the app routes for Create Request, My Requests, My Approvals, and Request Detail; wire them into the App shell router so all pages are navigable (no orphan views). Use existing shadcn/ui components for layout primitives where appropriate (compose only; do not modify ui components). Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/layout/AppLayout.tsx",
+          "operation": "create",
+          "description": "Create a shared SAP Fiori-like layout (header + navigation + content container) used by all primary pages. Compose existing shadcn/ui components (e.g., navigation, separators, dropdowns) without modifying ui internals. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/CreateRequestPage.tsx",
+          "operation": "create",
+          "description": "Implement the Create Request form (English labels, validation, and submit) calling submitRequest(headerFields) and showing success/error states. Compose existing shadcn/ui form inputs/buttons/cards (do not modify ui components). Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/MyRequestsPage.tsx",
+          "operation": "create",
+          "description": "Implement My Requests list for the signed-in user (status, current approval level, updated time) and navigation to Request Detail. Use React Query with actor.getUserRequests(identity.getPrincipal()) and handle loading/empty/error states in a consistent enterprise style. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/MyApprovalsPage.tsx",
+          "operation": "create",
+          "description": "Implement the approver inbox showing only requests requiring the current user's action. Fetch approvals by querying backend per-level (e.g., 8–9 levels) and aggregating results, handling authorization errors safely. Present as a table with filters/empty state in SAP Fiori-like styling using composed shadcn/ui table primitives. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/RequestDetailPage.tsx",
+          "operation": "create",
+          "description": "Implement Request Detail view showing request header fields and immutable approval history (approvalRecords), plus contextual actions area (Approve/Reject shown conditionally per REQ-6). Use composed shadcn/ui cards/tables/badges and consistent loading/error states. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useRequests.ts",
+          "operation": "create",
+          "description": "Add React Query hooks for: fetching my requests, fetching a request by id, submitting a request, and (read-only) helpers for status/level display formatting. Ensure hooks depend on actor readiness and handle backend traps as user-visible errors. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useApprovals.ts",
+          "operation": "create",
+          "description": "Add React Query hooks for: fetching my approvals (aggregate across levels), approving/rejecting with optional comment, and determining whether a given request is actionable by the current user based on inbox membership and request status. Handle backend authorization failures gracefully. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/package.json",
+          "operation": "modify",
+          "description": "Ensure routing and UI dependencies needed by the new pages/layout are present (e.g., react-router-dom if not already available), without changing the template's immutable component paths. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "summary": "Add role-based navigation and conditional approval actions so non-approvers never see approval controls and unauthorized UI states remain safe under direct navigation.",
+      "acceptanceCriteria": [
+        "If the signed-in user has no current approval tasks, the UI does not show approval-action controls (Approve/Reject) for any request.",
+        "Approve/Reject buttons are shown only when the current request’s active level is assigned to the signed-in user.",
+        "Direct navigation to approval-action UI states still results in no actions available unless authorized (frontend must reflect backend authorization errors safely)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/layout/AppLayout.tsx",
+          "operation": "modify",
+          "description": "Update navigation to be task-aware: show the My Approvals navigation item only when the current user has actionable approvals (based on useApprovals), and never show approval-only affordances to users without tasks. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/RequestDetailPage.tsx",
+          "operation": "modify",
+          "description": "Gate Approve/Reject controls: render them only if the request is actionable for the signed-in user (based on useApprovals and request.currentApprovalLevel/status). If backend rejects action, show a safe English error message and keep UI non-destructive. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/MyApprovalsPage.tsx",
+          "operation": "modify",
+          "description": "Ensure the inbox only displays actionable items and that attempting to act while unauthenticated or unauthorized is blocked in the UI with clear messaging, while still reflecting backend authorization errors safely. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/routes.tsx",
+          "operation": "modify",
+          "description": "Add route-level guards for authenticated access to application pages (Create/My Requests/My Approvals/Detail). When unauthenticated, route to an in-app sign-in prompt state rather than exposing data. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/auth/AccessDeniedScreen.tsx",
+          "operation": "create",
+          "description": "Create an access-denied / sign-in required screen used by route guards and app shell to block viewing app data when not authenticated. Use the selected \"authorization\" component guidance for Access Control UI; verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "summary": "Apply a consistent SAP Fiori-inspired visual theme using Tailwind and composed UI components, with professional loading/empty/error states and subdued (non blue/purple-centric) enterprise styling.",
+      "acceptanceCriteria": [
+        "All primary pages (Create, My Requests, My Approvals, Detail) share a consistent header/navigation and visual language.",
+        "Tables/cards/forms use consistent spacing, font sizes, and subdued enterprise colors (not blue/purple-centric).",
+        "UI states are styled (loading, empty state, error state) in a consistent, professional manner."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/index.css",
+          "operation": "create",
+          "description": "Create global Tailwind base styles and CSS variables to support a clean, light enterprise theme (subdued neutrals, accessible contrast), aligning shadcn/ui tokens with a SAP Fiori-like look and avoiding a blue/purple-centric palette. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/tailwind.config.js",
+          "operation": "modify",
+          "description": "Adjust Tailwind theme extensions (fonts, radii, shadows, semantic colors via CSS variables) to reinforce a SAP Fiori-like visual system and consistent component states across pages. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/ui/immutable-note.txt",
+          "operation": "create",
+          "description": "Add a lightweight developer note to document that shadcn/ui components under frontend/src/components/ui are immutable and must be composed rather than edited, ensuring design changes are implemented via layout components and global theming. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/common/StatePanels.tsx",
+          "operation": "create",
+          "description": "Create reusable, consistently styled loading/empty/error panels for tables and detail views (English text only), used across Create/My Requests/My Approvals/Detail to keep UI states cohesive and professional. Compose existing shadcn/ui primitives (cards/alerts/spinners if present) without modifying ui components. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/CreateRequestPage.tsx",
+          "operation": "modify",
+          "description": "Align Create Request form spacing, typography, and validation/error presentation with the shared theme and StatePanels, keeping a SAP Fiori-like clean layout. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/MyRequestsPage.tsx",
+          "operation": "modify",
+          "description": "Align table/card styling, empty state, and error state with the shared theme and StatePanels; ensure consistent typography and spacing. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/MyApprovalsPage.tsx",
+          "operation": "modify",
+          "description": "Align inbox table styling and UI states with the shared theme and StatePanels; ensure professional enterprise look and consistent interactions. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/RequestDetailPage.tsx",
+          "operation": "modify",
+          "description": "Align detail header, sections (request info, approval history, actions), and UI states with the shared theme and StatePanels for a cohesive SAP Fiori-like experience. Verify the component's usage instructions before implementing."
+        }
+      ]
+    }
+  ]
+}

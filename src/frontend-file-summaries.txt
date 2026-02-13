@@ -1,0 +1,18 @@
+{
+  "frontend/src/App.tsx": "Main application component with TanStack Router setup, authentication flow, profile setup dialog, and route definitions for all pages, with RootComponent extracted as a proper React component to satisfy hooks rules.",
+  "frontend/src/hooks/useCurrentUserProfile.ts": "React Query hooks for fetching and saving the current user's profile, with proper loading state management to prevent modal flash during initialization.",
+  "frontend/src/hooks/useAuthz.ts": "Authentication helper hook that provides authentication state, principal string, and logout function with cache clearing.",
+  "frontend/src/hooks/useRequests.ts": "React Query hooks for managing manufacturing requests including fetching user requests, individual request details, submitting new requests, and utility functions for formatting request status.",
+  "frontend/src/hooks/useApprovals.ts": "React Query hooks for approval workflow including fetching approvals across all levels (0-7), approving/rejecting requests, and determining if a request is actionable by the current user.",
+  "frontend/src/components/auth/LoginButton.tsx": "Login/logout button component using Internet Identity with loading states and proper error handling.",
+  "frontend/src/components/auth/ProfileSetupDialog.tsx": "Modal dialog for first-time profile setup that prompts authenticated users without a profile to enter their name.",
+  "frontend/src/components/auth/AccessDeniedScreen.tsx": "Full-screen access denied component shown to unauthenticated users with a sign-in button.",
+  "frontend/src/components/layout/AppLayout.tsx": "Main application layout with header, navigation, user profile display, and footer with conditional navigation items based on approval access.",
+  "frontend/src/components/common/StatePanels.tsx": "Reusable UI state components for loading, empty, and error states with consistent enterprise styling.",
+  "frontend/src/pages/CreateRequestPage.tsx": "Form page for creating and submitting new non-standard manufacturing requests with validation and navigation.",
+  "frontend/src/pages/MyRequestsPage.tsx": "Table view of all requests created by the current user with status badges, approval level tracking, and navigation to detail view.",
+  "frontend/src/pages/MyApprovalsPage.tsx": "Approval inbox showing only requests requiring the current user's action, filtered by their assigned approval levels.",
+  "frontend/src/pages/RequestDetailPage.tsx": "Detailed request view with header information, complete approval history audit trail, and conditional approve/reject actions for authorized approvers.",
+  "frontend/src/index.css": "Global styles with OKLCH color system featuring a subdued teal primary color and warm neutral grays for a clean enterprise aesthetic, avoiding blue/purple-centric design.",
+  "frontend/tailwind.config.js": "Tailwind configuration with custom color tokens, Inter font family, refined border radius values, and enhanced shadow utilities for SAP Fiori-inspired design."
+}

@@ -1,0 +1,113 @@
+{
+  "kind": "spec_vs_diff_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-12T13:29:14.692Z",
+  "summary": "The diff adds an Internet Identity-based auth flow and a new UI with pages for Create Request, My Requests, My Approvals, and Request Detail, plus backend workflow stubs. However, several core backend workflow/persistence requirements for an 8–9 level approval process are not clearly implemented (or are contradicted) in the provided truncated backend, and stable persistence is not evidenced. The diff also introduces unrequested features like user profiles and an admin-token access-control initialization path.",
+  "missing_requirements": [
+    {
+      "id": "REQ-2",
+      "requirement": "Persistent backend data model for manufacturing requests with 8–9 ordered approval levels, per-level approval records, computed current level/overall status, and stable storage across canister upgrades/refreshes.",
+      "reason": "backend/main.mo shows in-memory Maps (requests, approvalLevelUsers, userProfiles) but no evidence of stable variables and upgrade hooks (preupgrade/postupgrade) to persist data in stable storage. Also, the request model shows a flat approvalRecords array and a currentApprovalLevel, but no explicit ordered 8–9 level structure is evidenced (frontend loops levels 0..7 only).",
+      "evidence": [
+        "backend/main.mo (uses Map.empty for requests/approvalLevelUsers/userProfiles; no stable storage shown in truncated content)",
+        "frontend/src/hooks/useApprovals.ts (loops level = 0; level < 8; level++)"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "requirement": "Submit must move Draft -> In Approval and set current level to first; approve advances through levels until Approved; reject stops workflow and marks Rejected; detail APIs must return immutable audit trail (who/when/decision/comment).",
+      "reason": "submitRequest in backend sets status to #submitted (not #inApproval) and currentApprovalLevel = 0, which does not match the acceptance criteria. Approve/reject logic and audit-trail immutability cannot be confirmed due to truncation; no clear evidence of draft handling, explicit level advancement through 8–9 levels, or immutable history API shape beyond returning ManufacturingRequest.",
+      "evidence": [
+        "backend/main.mo (submitRequest sets status = #submitted; currentApprovalLevel = 0; approvalRecords = [])",
+        "frontend/src/hooks/useRequests.ts (submitRequest calls actor.submitRequest(headerFields) only; no draft/create separate)",
+        "frontend/src/hooks/useRequests.ts (useGetRequest expects actor.getRequest(requestId) returning ManufacturingRequest only)"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "requirement": "Backend authorization: approvers can only view/act on tasks assigned to their current approval level(s); creators can only view/manage their own requests unless also approver; unauthorized calls return clear errors and do not modify state.",
+      "reason": "Some authorization checks are shown (permission checks and a hasApprovalAccess call), but the required read-scoping APIs are not fully evidenced: frontend calls actor.getUserRequests(principal), actor.getRequest(requestId), and actor.getRequestsByLevel(level). The diff summary does not show implementations for these methods (or their authorization constraints) due to truncation, so correct scoping cannot be verified.",
+      "evidence": [
+        "backend/main.mo (shows AccessControl.hasPermission checks and hasApprovalAccess usage, but approveRequest implementation is truncated)",
+        "frontend/src/hooks/useRequests.ts (calls actor.getUserRequests(identity.getPrincipal()) and actor.getRequest(requestId))",
+        "frontend/src/hooks/useApprovals.ts (calls actor.getRequestsByLevel(BigInt(level)))"
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "requirement": "Support an 8–9 level approval workflow (not fewer).",
+      "reason": "Frontend hardcodes 8 levels (0..7) and displays 'of 8', with no evidence of configurability to 9 levels.",
+      "evidence": [
+        "frontend/src/hooks/useApprovals.ts (for level = 0; level < 8; level++)",
+        "frontend/src/pages/MyApprovalsPage.tsx (displays 'Level ... of 8')",
+        "frontend/src/pages/MyRequestsPage.tsx (displays 'Level ... of 8')"
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "requirement": "Approve/Reject buttons shown only when current request’s active level is assigned to the signed-in user; direct navigation must still show no actions unless authorized and must safely reflect backend authorization errors.",
+      "reason": "The UI hides the 'My Approvals' nav when there are no approvals, and computes actionability from the inbox list, but the diff summary truncates RequestDetailPage before the action controls are shown/conditioned. Therefore it’s not verifiable that Approve/Reject buttons are correctly hidden/disabled and that backend authorization errors are safely reflected for direct navigation.",
+      "evidence": [
+        "frontend/src/components/layout/AppLayout.tsx (My Approvals nav shown only if hasApprovals)",
+        "frontend/src/hooks/useApprovals.ts (useIsRequestActionable derived from myApprovals list)",
+        "frontend/src/pages/RequestDetailPage.tsx (truncated; cannot confirm conditional rendering of Approve/Reject controls)"
+      ]
+    }
+  ],
+  "hallucinated_features": [
+    {
+      "description": "User profile creation/setup (name) with mandatory profile dialog and backend profile storage.",
+      "reason": "BuildRequest does not request user profile management; it only requires Internet Identity authentication and approval workflow features.",
+      "evidence": [
+        "backend/main.mo (UserProfile type; getCallerUserProfile/getUserProfile/saveCallerUserProfile; userProfiles Map)",
+        "frontend/src/components/auth/ProfileSetupDialog.tsx",
+        "frontend/src/hooks/useCurrentUserProfile.ts",
+        "frontend/src/App.tsx (forces ProfileSetupDialog when profile missing)"
+      ]
+    },
+    {
+      "description": "Admin-token based access control initialization via URL parameter 'caffeineAdminToken'.",
+      "reason": "BuildRequest does not request admin bootstrap via secret URL parameter or any admin token mechanism.",
+      "evidence": [
+        "frontend/src/hooks/useActor.ts (getSecretParameter('caffeineAdminToken'); calls actor._initializeAccessControlWithSecret(adminToken))",
+        "frontend/src/utils/urlParams.ts (URL/session parameter utilities for persisted parameters)"
+      ]
+    },
+    {
+      "description": "Caffeine.ai promotional footer content.",
+      "reason": "Not requested in BuildRequest and is unrelated to approval workflow requirements.",
+      "evidence": [
+        "frontend/src/components/layout/AppLayout.tsx (footer linking to caffeine.ai with tracking params)"
+      ]
+    }
+  ],
+  "confidence": 0.62,
+  "changed_files": [
+    "all_files_summary.json",
+    "backend/main.mo",
+    "frontend-file-summaries.txt",
+    "frontend/index.css",
+    "frontend/index.html",
+    "frontend/src/App.tsx",
+    "frontend/src/components/auth/AccessDeniedScreen.tsx",
+    "frontend/src/components/auth/LoginButton.tsx",
+    "frontend/src/components/auth/ProfileSetupDialog.tsx",
+    "frontend/src/components/common/StatePanels.tsx",
+    "frontend/src/components/layout/AppLayout.tsx",
+    "frontend/src/hooks/useActor.ts",
+    "frontend/src/hooks/useApprovals.ts",
+    "frontend/src/hooks/useAuthz.ts",
+    "frontend/src/hooks/useCurrentUserProfile.ts",
+    "frontend/src/hooks/useInternetIdentity.ts",
+    "frontend/src/hooks/useRequests.ts",
+    "frontend/src/index.css",
+    "frontend/src/main.tsx",
+    "frontend/src/pages/CreateRequestPage.tsx",
+    "frontend/src/pages/MyApprovalsPage.tsx",
+    "frontend/src/pages/MyRequestsPage.tsx",
+    "frontend/src/pages/RequestDetailPage.tsx",
+    "frontend/src/utils/urlParams.ts",
+    "frontend/tailwind.config.js",
+    "project_state.json"
+  ]
+}

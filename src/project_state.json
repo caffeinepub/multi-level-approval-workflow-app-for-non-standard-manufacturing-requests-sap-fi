@@ -1,0 +1,88 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "Approval workflow app for non-standard manufacturing requests, SAP Fiori-like UI, with 8–9 approval levels and role-based approver views.",
+  "architectural_notes": [
+    "Support configurable multi-level approval workflows (8–9 stages).",
+    "Use role-based access control to restrict each approver to only their relevant screens and approvals.",
+    "UI should follow SAP Fiori-style design patterns."
+  ],
+  "known_issues": [],
+  "isFixRequest": false,
+  "existing_features": [
+    {
+      "id": "feature-implement-authentication-using-internet-identity-and-persist-each-signed-in-user-s-principal-as-their-identity-for-authorization-decisions-throughout-the-app",
+      "title": "Implement authentication using Internet Identity and persist each signed-in user's Principal as their identity for authorization decisions throughout the app.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-build-a-sap-fiori-like-web-ui-layout-spacing-typography-cards-tables-and-form-styling-for-1-creating-and-submitting-a-non-standard-request-2-viewing-my-requests-and-their-statuses-and-3-an-approver-my-approvals-inbox-that-lists-only-the-requests-requiring-the-signed-in-approver-s-action",
+      "title": "Build a SAP Fiori-like web UI (layout, spacing, typography, cards/tables, and form styling) for: (1) creating and submitting a non-standard request, (2) viewing “My Requests” and their statuses, and (3) an approver “My Approvals” inbox that lists only the requests requiring the signed-in approver’s action.",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-role-based-navigation-and-page-access-so-approvers-only-see-their-relevant-approval-inbox-detail-actions-users-who-are-not-approvers-for-any-current-tasks-must-not-see-approval-actions-in-the-ui",
+      "title": "Implement role-based navigation and page access so approvers only see their relevant approval inbox/detail actions; users who are not approvers for any current tasks must not see approval actions in the UI.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-coherent-consistent-visual-theme-inspired-by-sap-fiori-clean-light-enterprise-ui-using-tailwind-styling-and-existing-ui-components-avoid-a-blue-purple-centric-palette-unless-necessary-and-ensure-consistent-spacing-typography-and-component-states-across-pages",
+      "title": "Add a coherent, consistent visual theme inspired by SAP Fiori (clean, light, enterprise UI) using Tailwind styling and existing UI components; avoid a blue/purple-centric palette unless necessary, and ensure consistent spacing, typography, and component states across pages.",
+      "reqIds": [
+        "REQ-7"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Build a SAP Fiori-like app to manage non-standard manufacturing requests with an 8–9 level approval workflow.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Implement role-based approver pages so each approver only sees their relevant approval screen and tasks.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Create a data model and persistence for non-standard manufacturing requests that supports an 8–9 level approval workflow, including: request header fields, current approval level, per-level approval records (status, actor, timestamp, optional comment), and an overall request status (e.g., Draft/Submitted/In Approval/Approved/Rejected).",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Implement backend authorization rules so that approvers can only view and act on approval tasks that are assigned to their approval level(s), and request creators can only view and manage their own requests (unless they are also an approver for a level on that request).",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-6",
+      "summary": "Implement the workflow actions in the backend: submit request, approve current level, reject request, and fetch request details and history. Approving a level must advance the request to the next level until final approval; rejection must stop the workflow and mark the request rejected.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "status": "pending"
+    }
+  ],
+  "gameProjectType": "none",
+  "projectName": "Multi-level approval workflow app for non-standard manufacturing requests (SAP Fiori-like UI)",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

@@ -1,0 +1,166 @@
+{
+  "kind": "build_request",
+  "title": "Multi-level approval workflow app for non-standard manufacturing requests (SAP Fiori-like UI)",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "Implement authentication using Internet Identity and persist each signed-in user's Principal as their identity for authorization decisions throughout the app.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "all approevrs should see oly their relevant page"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Users can sign in and sign out using Internet Identity.",
+        "Backend methods can identify the caller (Principal) and use it for access control.",
+        "Frontend shows signed-in state and blocks approval actions when not authenticated."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Create a data model and persistence for non-standard manufacturing requests that supports an 8–9 level approval workflow, including: request header fields, current approval level, per-level approval records (status, actor, timestamp, optional comment), and an overall request status (e.g., Draft/Submitted/In Approval/Approved/Rejected).",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "multiple levels of approvals for a non standard request in a mnaufacturing company",
+          "8-9 levels of approval"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A request can be created and stored persistently in the backend canister.",
+        "Each request stores an ordered sequence of 8–9 approval levels and their approval outcomes.",
+        "The backend can compute and return the request's current level and overall status based on recorded approvals.",
+        "Data remains available across page refreshes (canister stable storage)."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Implement backend authorization rules so that approvers can only view and act on approval tasks that are assigned to their approval level(s), and request creators can only view and manage their own requests (unless they are also an approver for a level on that request).",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "all approevrs should see oly their relevant page"
+        ]
+      },
+      "acceptanceCriteria": [
+        "An approver querying their approvals only receives requests where their Principal is assigned to the active approval level (or levels, if applicable).",
+        "A user cannot approve/reject a request unless they are the assigned approver for the request’s current level.",
+        "A user cannot read another user’s requests unless they are assigned as an approver for a level on that request.",
+        "Unauthorized calls return clear errors and do not modify state."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Implement the workflow actions in the backend: submit request, approve current level, reject request, and fetch request details and history. Approving a level must advance the request to the next level until final approval; rejection must stop the workflow and mark the request rejected.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "8-9 levels of approval"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Submitting a request moves it from Draft to In Approval and sets the current approval level to the first level.",
+        "Approving the current level records the approval and advances to the next level; after the last level, the request becomes Approved.",
+        "Rejecting records the rejection and sets the request status to Rejected with no further approvals possible.",
+        "Request detail APIs return an immutable audit trail of approval actions (who/when/what decision/comment)."
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Build a SAP Fiori-like web UI (layout, spacing, typography, cards/tables, and form styling) for: (1) creating and submitting a non-standard request, (2) viewing “My Requests” and their statuses, and (3) an approver “My Approvals” inbox that lists only the requests requiring the signed-in approver’s action.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "the app should be similar to sap fiori app",
+          "all approevrs should see oly their relevant page"
+        ]
+      },
+      "acceptanceCriteria": [
+        "There is a Create Request form with validation and a Submit action.",
+        "There is a My Requests page listing requests created by the signed-in user with status and current level.",
+        "There is a My Approvals inbox showing only actionable approvals for the signed-in user.",
+        "Each list supports opening a detail view that shows request info plus approval history."
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "text": "Implement role-based navigation and page access so approvers only see their relevant approval inbox/detail actions; users who are not approvers for any current tasks must not see approval actions in the UI.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "all approevrs should see oly their relevant page"
+        ]
+      },
+      "acceptanceCriteria": [
+        "If the signed-in user has no current approval tasks, the UI does not show approval-action controls (Approve/Reject) for any request.",
+        "Approve/Reject buttons are shown only when the current request’s active level is assigned to the signed-in user.",
+        "Direct navigation to approval-action UI states still results in no actions available unless authorized (frontend must reflect backend authorization errors safely)."
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "text": "Add a coherent, consistent visual theme inspired by SAP Fiori (clean, light, enterprise UI) using Tailwind styling and existing UI components; avoid a blue/purple-centric palette unless necessary, and ensure consistent spacing, typography, and component states across pages.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "the app should be similar to sap fiori app"
+        ]
+      },
+      "acceptanceCriteria": [
+        "All primary pages (Create, My Requests, My Approvals, Detail) share a consistent header/navigation and visual language.",
+        "Tables/cards/forms use consistent spacing, font sizes, and subdued enterprise colors (not blue/purple-centric).",
+        "UI states are styled (loading, empty state, error state) in a consistent, professional manner."
+      ]
+    }
+  ],
+  "constraints": [
+    "Backend must remain a single Motoko actor (all logic in backend/main.mo).",
+    "Do not modify files under frontend/src/components/ui or other immutable paths defined by the template; compose these components instead.",
+    "Use English for all user-facing UI text."
+  ],
+  "nonGoals": [
+    "Integrating with SAP systems or SAP Fiori APIs.",
+    "Implementing external database storage (use canister stable storage only).",
+    "Supporting third-party authentication providers beyond Internet Identity.",
+    "Real-time updates via WebSockets/push notifications."
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [
+      "Use English for user-facing text."
+    ],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
+  }
+}
